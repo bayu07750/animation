@@ -1,7 +1,5 @@
 package com.sample.animation.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +36,7 @@ fun BannerSlider(
     onIndicatorSelect: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    if (banners.isEmpty()) return
     val activeBanner = banners[currentIndex]
     var breathe by remember { mutableStateOf(false) }
 
@@ -48,16 +47,14 @@ fun BannerSlider(
         }
     }
 
-    val scale = animateFloatAsState(
-        targetValue = if (breathe) 1.04f else 1f,
-        animationSpec = tween(durationMillis = 800),
-        label = "BannerScale"
-    )
-    val offset = animateFloatAsState(
-        targetValue = if (breathe) 8f else -8f,
-        animationSpec = tween(durationMillis = 800),
-        label = "BannerOffset"
-    )
+    // =========================================================================
+    // TODO: 1.1 Simple animation for sliding and breathing banner effects.
+    // Replace these static states with `animateFloatAsState` driven by `breathe`.
+    // - Scale target: 1.04f when breathing, 1f when relaxed (tween duration 800ms)
+    // - Offset target: 8f when breathing, -8f when relaxed (tween duration 800ms)
+    // =========================================================================
+    val scale = remember { mutableStateOf(1f) }
+    val offset = remember { mutableStateOf(0f) }
 
     Column(
         modifier = modifier,
@@ -95,11 +92,12 @@ fun BannerSlider(
         Spacer(modifier = Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             banners.forEachIndexed { index, _ ->
-                val indicatorScale = animateFloatAsState(
-                    targetValue = if (index == currentIndex) 1.2f else 0.8f,
-                    animationSpec = tween(250),
-                    label = "IndicatorScale"
-                )
+                // =========================================================================
+                // TODO: 1.2 Simple animation for page indicators effects.
+                // Replace this static state with `animateFloatAsState`.
+                // - Scale target: 1.2f when active (index == currentIndex), 0.8f otherwise (tween 250ms)
+                // =========================================================================
+                val indicatorScale = remember { mutableStateOf(1f) }
                 val color = if (index == currentIndex) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                 Spacer(
                     modifier = Modifier

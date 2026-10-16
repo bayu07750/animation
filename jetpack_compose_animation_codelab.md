@@ -215,7 +215,8 @@ git checkout 2026/starter
 
 ```
 app/src/main/java/com/sample/animation/
-├── MainActivity.kt
+├── app/
+│   └── MainActivity.kt        <-- Activity entry point
 ├── data/
 │   ├── DummyData.kt
 │   ├── Product.kt
@@ -263,6 +264,7 @@ Open `HomeScreen.kt`. Notice how `HomeScreen` owns the state `currentIndex` and 
 
 ### app/src/main/java/com/sample/animation/ui/home/HomeScreen.kt
 ```kotlin
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     cartCount: Int,
@@ -272,7 +274,6 @@ fun HomeScreen(
 ) {
     var currentIndex by rememberSaveable { mutableIntStateOf(0) }
 
-    // Auto-advances the slider every 2 seconds
     LaunchedEffect(currentIndex) {
         delay(2000)
         currentIndex = (currentIndex + 1) % promoBanners.size
@@ -281,12 +282,24 @@ fun HomeScreen(
     Surface(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.padding(16.dp)) {
             TopAppBar(
-                title = { Text(text = "Compose Animation Training", style = MaterialTheme.typography.titleMedium) },
-                actions = { CartBadge(count = cartCount, onClick = onCartClick) }
+                title = {
+                    Column {
+                        Text(text = "Compose Animation Training", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = "Home",
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Light)
+                        )
+                    }
+                },
+                actions = {
+                    CartBadge(count = cartCount, onClick = onCartClick)
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                )
             )
             Spacer(modifier = Modifier.height(12.dp))
-
-            // Here BannerSlider is sewn into the Home Screen:
             BannerSlider(
                 banners = promoBanners,
                 currentIndex = currentIndex,
@@ -306,12 +319,21 @@ fun HomeScreen(
 Now open `ui/components/BannerSlider.kt`. Currently, `scale`, `offset`, and `indicatorScale` are static dummy states!
 
 ```kotlin
-// In 2026/starter:
+// In 2026/starter (ui/components/BannerSlider.kt):
+// =========================================================================
 // TODO: 1.1 Simple animation for sliding and breathing banner effects.
+// Replace these static states with `animateFloatAsState` driven by `breathe`.
+// - Scale target: 1.04f when breathing, 1f when relaxed (tween duration 800ms)
+// - Offset target: 8f when breathing, -8f when relaxed (tween duration 800ms)
+// =========================================================================
 val scale = remember { mutableStateOf(1f) }
 val offset = remember { mutableStateOf(0f) }
 ...
+// =========================================================================
 // TODO: 1.2 Simple animation for page indicators effects.
+// Replace this static state with `animateFloatAsState`.
+// - Scale target: 1.2f when active (index == currentIndex), 0.8f otherwise (tween 250ms)
+// =========================================================================
 val indicatorScale = remember { mutableStateOf(1f) }
 ```
 
@@ -329,19 +351,31 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.sample.animation.data.PromoBanner
+import kotlinx.coroutines.delay
 
 @Composable
 fun BannerSlider(
@@ -352,11 +386,14 @@ fun BannerSlider(
     modifier: Modifier = Modifier
 ) {
     if (banners.isEmpty()) return
-
+    val activeBanner = banners[currentIndex]
     var breathe by remember { mutableStateOf(false) }
-    LaunchedEffect(currentIndex) {
-        breathe = false
-        breathe = true
+
+    LaunchedEffect(activeBanner) {
+        while (true) {
+            breathe = !breathe
+            delay(1200)
+        }
     }
 
     // 1.1 Simple animation for sliding and breathing banner effects
@@ -375,30 +412,35 @@ fun BannerSlider(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        val banner = banners[currentIndex]
-        Surface(
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
                 .graphicsLayer(
+                    translationX = offset.value,
                     scaleX = scale.value,
-                    scaleY = scale.value,
-                    translationX = offset.value
+                    scaleY = scale.value
                 )
-                .clip(RoundedCornerShape(16.dp))
-                .clickable { onBannerClick(banner) },
-            color = banner.backgroundColor,
-            tonalElevation = 6.dp
+                .clickable { onBannerClick(activeBanner) },
+            colors = CardDefaults.cardColors(containerColor = activeBanner.color),
+            shape = RoundedCornerShape(24.dp)
         ) {
-            Box(modifier = Modifier.padding(20.dp), contentAlignment = Alignment.CenterStart) {
-                Column {
-                    Text(text = banner.title, style = MaterialTheme.typography.titleLarge)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = banner.subtitle, style = MaterialTheme.typography.bodyMedium)
-                }
+            Column(
+                modifier = Modifier.padding(24.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = activeBanner.title,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+                Text(
+                    text = "Discover great offers today",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
             }
         }
-
         Spacer(modifier = Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             banners.forEachIndexed { index, _ ->
@@ -416,9 +458,8 @@ fun BannerSlider(
                             scaleX = indicatorScale.value,
                             scaleY = indicatorScale.value
                         )
-                        .clip(CircleShape)
-                        .background(color)
                         .clickable { onIndicatorSelect(index) }
+                        .background(color, shape = RoundedCornerShape(50))
                 )
             }
         }
@@ -462,21 +503,33 @@ Open `ProductDetailScreen.kt`. Notice the structure:
 * In `2026/starter`, the extra info column is statically displayed or toggled instantaneously with no animation:
 
 ```kotlin
-// In 2026/starter:
-// TODO: 2.1 Visibility animation with `fadeIn`/`fadeOut` and `expandVertically`/`shrinkVertically`, wrapped in `animateContentSize`.
+// In 2026/starter (ui/detail/ProductDetailScreen.kt):
+// =========================================================================
+// TODO: 2.1 Visibility animation with `fadeIn`/`fadeOut` and
+// `expandVertically`/`shrinkVertically`, wrapped in `animateContentSize()`.
+// Default state should start collapsed (false) when implementing.
+// =========================================================================
 var showMoreInfo by remember { mutableStateOf(true) }
 ...
-/*
-* TODO: 2.2 Adjust this content to be expandable based on declared state
-*  Don't forget to put a modifier to automatically animate the height changes
-*/
+// =========================================================================
+// TODO: 2.2 Wrap this content with AnimatedVisibility:
+//   visible = showMoreInfo,
+//   enter = fadeIn() + expandVertically(),
+//   exit = fadeOut() + shrinkVertically()
+//
+// And add Modifier.animateContentSize() to the Column to ensure
+// smooth container height transitions without clipping or layout jumping.
+// =========================================================================
 Column(
     modifier = Modifier
         .fillMaxWidth()
         .padding(8.dp),
     verticalArrangement = Arrangement.spacedBy(6.dp)
 ) {
-    Text(text = "Experience immersive sound...", style = MaterialTheme.typography.bodyMedium)
+    Text(
+        text = "Experience immersive sound with plush ear cushions and adaptive noise cancelling.",
+        style = MaterialTheme.typography.bodyMedium
+    )
     Text(text = "Warranty: 1 year", style = MaterialTheme.typography.bodySmall)
     Text(text = "Ships in 2-3 business days", style = MaterialTheme.typography.bodySmall)
 }
@@ -509,7 +562,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -539,12 +592,16 @@ fun ProductDetailScreen(
                 title = { Text(text = product.name, style = MaterialTheme.typography.titleMedium) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
                     CartBadge(count = cartCount, onClick = onCheckout)
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                )
             )
             Spacer(modifier = Modifier.height(12.dp))
             Surface(
@@ -559,7 +616,7 @@ fun ProductDetailScreen(
                     Text(text = product.name, style = MaterialTheme.typography.headlineSmall)
                     Text(text = "Rp ${product.price}", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
                     Text(text = product.description, style = MaterialTheme.typography.bodyMedium)
-                    Divider()
+                    HorizontalDivider()
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(text = "Specs", style = MaterialTheme.typography.titleSmall)
                         product.specs.forEach { spec ->
@@ -670,32 +727,37 @@ When `CartBadge` updates, every screen using it automatically inherits the anima
 Open `ui/components/CartBadge.kt`. Currently, it displays the count inside a static `Box`:
 
 ```kotlin
-// In 2026/starter:
+// In 2026/starter (ui/components/CartBadge.kt):
+// =========================================================================
 // TODO: 3.1 Content animation for number transitions with slide, fade, and scale.
+// Wrap the count display inside `AnimatedContent(targetState = count, label = "CartCount")`.
+// Define transitionSpec using `togetherWith`:
+//   (slideInVertically { it } + fadeIn(tween(300)) + scaleIn()) togetherWith
+//   (slideOutVertically { -it } + fadeOut(tween(300)) + scaleOut())
+// Make sure to render the lambda value { value -> Text(text = "$value", ...) }
+// =========================================================================
 BadgedBox(
     badge = {
         if (count > 0) {
             Badge(containerColor = MaterialTheme.colorScheme.secondary) {
-                /*
-                * TODO: 3.2 Wrap this content into content animation where targetState is count with slide, fade and scale
-                * */
                 Box(modifier = Modifier.size(16.dp), contentAlignment = Alignment.Center) {
                     Text(text = "$count", style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
-    }
+    },
+    modifier = modifier
 )
 ```
 
 #### Step-by-Step Implementation:
 
-1. Import `AnimatedContent`, `slideInVertically`, `slideOutVertically`, `scaleIn`, `scaleOut`, `fadeIn`, `fadeOut`, and `with` (or `togetherWith`).
-2. Wrap the count `Box` inside `AnimatedContent(targetState = count)`.
+1. Import `AnimatedContent`, `slideInVertically`, `slideOutVertically`, `scaleIn`, `scaleOut`, `fadeIn`, `fadeOut`, and `togetherWith` from `androidx.compose.animation.*`.
+2. Wrap the count `Box` inside `AnimatedContent(targetState = count, label = "CartCount")`.
 3. Construct the `transitionSpec`:
    * **Enter Transition:** `slideInVertically { it } + fadeIn(tween(300)) + scaleIn()`
    * **Exit Transition:** `slideOutVertically { -it } + fadeOut(tween(300)) + scaleOut()`
-   * Combine them using the infix operator `with` (or `togetherWith`).
+   * Combine them using the modern infix operator `togetherWith`.
 
 ### app/src/main/java/com/sample/animation/ui/components/CartBadge.kt
 ```kotlin
@@ -709,7 +771,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.with
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -730,11 +792,11 @@ fun CartBadge(
         badge = {
             if (count > 0) {
                 Badge(containerColor = MaterialTheme.colorScheme.secondary) {
-                    // 3.1 & 3.2 AnimatedContent with custom slide + fade + scale specs
+                    // 3.1 AnimatedContent with custom slide + fade + scale specs
                     AnimatedContent(
                         targetState = count,
                         transitionSpec = {
-                            (slideInVertically { it } + fadeIn(animationSpec = tween(300)) + scaleIn()) with
+                            (slideInVertically { it } + fadeIn(animationSpec = tween(300)) + scaleIn()) togetherWith
                                 (slideOutVertically { -it } + fadeOut(animationSpec = tween(300)) + scaleOut())
                         },
                         label = "CartCount"
@@ -806,7 +868,63 @@ scope.launch {
 }
 ```
 
-In `2026/starter`, the card color, corner radius, scale, and rotation are bound to static `when` expressions, and the shake animation block is empty.
+In `2026/starter`, the card color, corner radius, scale, and rotation are bound to static `when` expressions, and the shake animation block is empty:
+
+```kotlin
+// In 2026/starter (ui/checkout/CheckoutScreen.kt):
+// =========================================================================
+// TODO: 4.1 Synchronized multi-property state transitions with `updateTransition`.
+// Replace these static `when` expressions by declaring:
+//   val transition = updateTransition(targetState = state, label = "CheckoutTransition")
+//
+// Then animate each property from `transition`:
+//   - backgroundColor via transition.animateColor(label = "BackgroundColor") { ... }
+//   - cornerRadius via transition.animateFloat(label = "CornerRadius") { ... }
+//   - scale via transition.animateFloat(label = "Scale") { ... }
+//   - rotation via transition.animateFloat(label = "Rotation") { ... }
+// =========================================================================
+val backgroundColor = when (state) {
+    CheckoutState.Idle -> MaterialTheme.colorScheme.surface
+    CheckoutState.Processing -> MaterialTheme.colorScheme.secondaryContainer
+    CheckoutState.Success -> Color(0xFFB2FF59)
+    CheckoutState.Failed -> Color(0xFFFFCDD2)
+}
+val cornerRadius = when (state) {
+    CheckoutState.Idle -> 24f
+    CheckoutState.Processing -> 32f
+    CheckoutState.Success -> 20f
+    CheckoutState.Failed -> 18f
+}
+val scale = when (state) {
+    CheckoutState.Processing -> 1.05f
+    CheckoutState.Success -> 1.02f
+    CheckoutState.Failed -> 0.98f
+    else -> 1f
+}
+val rotation = when (state) {
+    CheckoutState.Processing -> 2f
+    CheckoutState.Failed -> -2f
+    else -> 0f
+}
+
+// =========================================================================
+// TODO: 4.2 Imperative physics-based shake on payment failure.
+// Inside LaunchedEffect(state):
+//   - If state == CheckoutState.Failed, animate `shake.animateTo(0f)` using
+//     keyframes:
+//       durationMillis = 500
+//       -10f at 0
+//       10f at 100
+//       -6f at 200
+//       3f at 300
+//       0f at 500
+//   - Otherwise, snap back: shake.snapTo(0f)
+// =========================================================================
+val shake = remember { Animatable(0f) }
+LaunchedEffect(state) {
+    // Implement shake keyframes here
+}
+```
 
 ---
 
@@ -1028,7 +1146,31 @@ data class ConfettiItem(
 )
 enum class ConfettiShape { Circle, Rectangle, Triangle }
 ```
-In `2026/starter`, `val animationProgress by remember { mutableStateOf(0f) }` is static, so the confetti remains frozen!
+In `2026/starter`, `val animationProgress by remember { mutableStateOf(0f) }` is static, so the confetti remains frozen:
+
+```kotlin
+// In 2026/starter (ui/success/CheckoutSuccessScreen.kt):
+// =========================================================================
+// TODO: 5.1 Continuous progress using rememberInfiniteTransition:
+// - Declare val infiniteTransition = rememberInfiniteTransition(label = "ConfettiTransition")
+// - Animate `animationProgress` from 0f to 1f using:
+//     infiniteRepeatable(
+//         animation = tween(durationMillis = 4000, easing = LinearEasing)
+//     )
+// =========================================================================
+val animationProgress by remember { mutableStateOf(0f) }
+
+...
+// Inside Canvas:
+// =========================================================================
+// TODO: 5.2 Dynamic particle wrapping with modulo:
+// - Calculate yOffset = (size.height * animationProgress + piece.speed * index) % size.height
+// - Calculate rotation = (animationProgress * 360f + index * 15) % 360f
+// =========================================================================
+val yOffset = size.height * animationProgress
+val x = piece.xPosition * size.width
+val rotation = animationProgress * 360f
+```
 
 ---
 

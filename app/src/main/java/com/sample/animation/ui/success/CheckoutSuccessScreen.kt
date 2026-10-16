@@ -1,10 +1,5 @@
 package com.sample.animation.ui.success
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +15,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,13 +58,15 @@ fun CheckoutSuccessScreen(
         }
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "ConfettiTransition")
-    val animationProgress by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(animation = tween(durationMillis = 4000, easing = LinearEasing)),
-        label = "Progress"
-    )
+    // =========================================================================
+    // TODO: 5.1 Continuous progress using rememberInfiniteTransition:
+    // - Declare val infiniteTransition = rememberInfiniteTransition(label = "ConfettiTransition")
+    // - Animate `animationProgress` from 0f to 1f using:
+    //     infiniteRepeatable(
+    //         animation = tween(durationMillis = 4000, easing = LinearEasing)
+    //     )
+    // =========================================================================
+    val animationProgress by remember { mutableStateOf(0f) }
 
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
@@ -87,9 +85,15 @@ fun CheckoutSuccessScreen(
             ) {
                 Canvas(modifier = Modifier.matchParentSize()) {
                     confetti.forEachIndexed { index, piece ->
-                        val yOffset = (size.height * animationProgress + piece.speed * index) % size.height
+                        // =====================================================================
+                        // TODO: 5.2 Dynamic particle wrapping with modulo:
+                        // - Calculate yOffset = (size.height * animationProgress + piece.speed * index) % size.height
+                        // - Calculate rotation = (animationProgress * 360f + index * 15) % 360f
+                        // =====================================================================
+                        val yOffset = size.height * animationProgress
                         val x = piece.xPosition * size.width
-                        val rotation = (animationProgress * 360f + index * 15) % 360f
+                        val rotation = animationProgress * 360f
+
                         rotate(degrees = rotation, pivot = Offset(x, yOffset)) {
                             when (piece.shape) {
                                 ConfettiShape.Circle -> drawCircle(

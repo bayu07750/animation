@@ -1,11 +1,6 @@
 package com.sample.animation.ui.checkout
 
-import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.keyframes
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,56 +53,57 @@ fun CheckoutScreen(
     var state by remember { mutableStateOf(CheckoutState.Idle) }
     val scope = rememberCoroutineScope()
 
-    val transition = updateTransition(targetState = state, label = "CheckoutTransition")
-    val backgroundColor by transition.animateColor(label = "BackgroundColor") { target ->
-        when (target) {
-            CheckoutState.Idle -> MaterialTheme.colorScheme.surface
-            CheckoutState.Processing -> MaterialTheme.colorScheme.secondaryContainer
-            CheckoutState.Success -> Color(0xFFB2FF59)
-            CheckoutState.Failed -> Color(0xFFFFCDD2)
-        }
+    // =========================================================================
+    // TODO: 4.1 Synchronized multi-property state transitions with `updateTransition`.
+    // Replace these static `when` expressions by declaring:
+    //   val transition = updateTransition(targetState = state, label = "CheckoutTransition")
+    //
+    // Then animate each property from `transition`:
+    //   - backgroundColor via transition.animateColor(label = "BackgroundColor") { ... }
+    //   - cornerRadius via transition.animateFloat(label = "CornerRadius") { ... }
+    //   - scale via transition.animateFloat(label = "Scale") { ... }
+    //   - rotation via transition.animateFloat(label = "Rotation") { ... }
+    // =========================================================================
+    val backgroundColor = when (state) {
+        CheckoutState.Idle -> MaterialTheme.colorScheme.surface
+        CheckoutState.Processing -> MaterialTheme.colorScheme.secondaryContainer
+        CheckoutState.Success -> Color(0xFFB2FF59)
+        CheckoutState.Failed -> Color(0xFFFFCDD2)
     }
-    val cornerRadius by transition.animateFloat(label = "CornerRadius") { target ->
-        when (target) {
-            CheckoutState.Idle -> 24f
-            CheckoutState.Processing -> 32f
-            CheckoutState.Success -> 20f
-            CheckoutState.Failed -> 18f
-        }
+    val cornerRadius = when (state) {
+        CheckoutState.Idle -> 24f
+        CheckoutState.Processing -> 32f
+        CheckoutState.Success -> 20f
+        CheckoutState.Failed -> 18f
     }
-    val scale by transition.animateFloat(label = "Scale") { target ->
-        when (target) {
-            CheckoutState.Processing -> 1.05f
-            CheckoutState.Success -> 1.02f
-            CheckoutState.Failed -> 0.98f
-            else -> 1f
-        }
+    val scale = when (state) {
+        CheckoutState.Processing -> 1.05f
+        CheckoutState.Success -> 1.02f
+        CheckoutState.Failed -> 0.98f
+        else -> 1f
     }
-    val rotation by transition.animateFloat(label = "Rotation") { target ->
-        when (target) {
-            CheckoutState.Processing -> 2f
-            CheckoutState.Failed -> -2f
-            else -> 0f
-        }
+    val rotation = when (state) {
+        CheckoutState.Processing -> 2f
+        CheckoutState.Failed -> -2f
+        else -> 0f
     }
 
+    // =========================================================================
+    // TODO: 4.2 Imperative physics-based shake on payment failure.
+    // Inside LaunchedEffect(state):
+    //   - If state == CheckoutState.Failed, animate `shake.animateTo(0f)` using
+    //     keyframes:
+    //       durationMillis = 500
+    //       -10f at 0
+    //       10f at 100
+    //       -6f at 200
+    //       3f at 300
+    //       0f at 500
+    //   - Otherwise, snap back: shake.snapTo(0f)
+    // =========================================================================
     val shake = remember { Animatable(0f) }
     LaunchedEffect(state) {
-        if (state == CheckoutState.Failed) {
-            shake.animateTo(
-                targetValue = 0f,
-                animationSpec = keyframes {
-                    durationMillis = 500
-                    -10f at 0
-                    10f at 100
-                    -6f at 200
-                    3f at 300
-                    0f at 500
-                }
-            )
-        } else {
-            shake.snapTo(0f)
-        }
+        // Implement shake keyframes here
     }
 
     Surface(modifier = modifier.fillMaxSize()) {
