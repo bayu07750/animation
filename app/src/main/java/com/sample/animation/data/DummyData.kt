@@ -1,6 +1,7 @@
 package com.sample.animation.data
 
 import androidx.compose.ui.graphics.Color
+import kotlinx.collections.immutable.persistentListOf
 import java.time.LocalDate
 
 val promoBanners = listOf(
@@ -15,7 +16,7 @@ val demoProducts = listOf(
         name = "Stellar Wireless Headphones",
         price = 799_000,
         description = "Premium wireless headphone with noise cancellation.",
-        specs = listOf("Bluetooth 5.3", "12h battery", "Type-C charging"),
+        specs = persistentListOf("Bluetooth 5.3", "12h battery", "Type-C charging"),
         color = Color(0xFF90CAF9),
         stock = 15,
         estimatedDelivery = LocalDate.now().plusDays(3)
@@ -25,7 +26,7 @@ val demoProducts = listOf(
         name = "Aura Smartwatch Pro",
         price = 1_499_000,
         description = "AMOLED display with all-day health & sleep tracking.",
-        specs = listOf("AMOLED 1.43\"", "SpO2 & Heart Rate", "Water Resistant 5ATM"),
+        specs = persistentListOf("AMOLED 1.43\"", "SpO2 & Heart Rate", "Water Resistant 5ATM"),
         color = Color(0xFFA5D6A7),
         stock = 8,
         estimatedDelivery = LocalDate.now().plusDays(2)
@@ -35,7 +36,7 @@ val demoProducts = listOf(
         name = "Nebula Mechanical Keyboard",
         price = 649_000,
         description = "Compact wireless mechanical keyboard with hot-swappable switches.",
-        specs = listOf("RGB Backlit", "Gateron Brown Switches", "Triple Connection Mode"),
+        specs = persistentListOf("RGB Backlit", "Gateron Brown Switches", "Triple Connection Mode"),
         color = Color(0xFFFFCC80),
         stock = 20,
         estimatedDelivery = LocalDate.now().plusDays(4)

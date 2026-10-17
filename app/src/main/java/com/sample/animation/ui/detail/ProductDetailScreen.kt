@@ -83,11 +83,10 @@ fun ProductDetailScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(text = product.name, style = MaterialTheme.typography.headlineSmall)
-                    // TODO: Step 1.4 — Composable Best Practice: Use remember for Expensive Computations
-                    // Masalah: Operasi formatting mata uang (NumberFormat Rupiah) dijalankan langsung di composition body tanpa cache.
-                    // Setiap kali recomposition terjadi (misal expand/collapse info atau update cart badge), instansiasi dan formatting dijalankan ulang.
-                    // Tindakan: Bungkus kalkulasi berat ini dengan `val formattedPrice = remember(product.price) { java.text.NumberFormat.getCurrencyInstance(java.util.Locale("id", "ID")).format(product.price) }`.
-                    val formattedPrice = java.text.NumberFormat.getCurrencyInstance(java.util.Locale("id", "ID")).format(product.price)
+                    // Step 1.4 Solved: Using remember to cache expensive formatting across recompositions
+                    val formattedPrice = remember(product.price) {
+                        java.text.NumberFormat.getCurrencyInstance(java.util.Locale("id", "ID")).format(product.price)
+                    }
                     Text(text = formattedPrice, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
                     Text(text = "Stock: ${product.stock} units • Est. Arrival: ${product.estimatedDelivery}", style = MaterialTheme.typography.bodySmall)
                     Text(text = product.description, style = MaterialTheme.typography.bodyMedium)

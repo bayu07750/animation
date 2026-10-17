@@ -36,11 +36,12 @@ import kotlinx.coroutines.delay
 @Composable
 fun BannerSlider(
     banners: List<PromoBanner>,
-    currentIndex: Int,
+    currentIndexProvider: () -> Int,
     onBannerClick: (PromoBanner) -> Unit,
     onIndicatorSelect: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val currentIndex = currentIndexProvider()
     val activeBanner = banners[currentIndex]
     var breathe by remember { mutableStateOf(false) }
 
@@ -70,16 +71,12 @@ fun BannerSlider(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
-                // TODO: Step 1.1 — Composable Best Practice: Use Lambda Modifiers
-                // Masalah: Menggunakan `Modifier.graphicsLayer(...)` dengan parameter nilai langsung menyebabkan
-                // Composable Card mengalami recomposition di setiap frame perubahan nilai animasi (fase Composition).
-                // Tindakan: Ubah menjadi lambda modifier `Modifier.graphicsLayer { translationX = ...; scaleX = ...; scaleY = ... }`
-                // agar kalkulasi animasi langsung dieksekusi pada fase Drawing dan melewati fase Composition & Layout.
-                .graphicsLayer(
-                    translationX = offset,
-                    scaleX = scale,
+                // Step 1.1 Solved: Using lambda modifier to skip Composition/Layout and execute only in Drawing phase
+                .graphicsLayer {
+                    translationX = offset
+                    scaleX = scale
                     scaleY = scale
-                )
+                }
                 .clickable { onBannerClick(activeBanner) },
             colors = CardDefaults.cardColors(containerColor = activeBanner.color),
             shape = RoundedCornerShape(24.dp)
@@ -116,10 +113,10 @@ fun BannerSlider(
                 Spacer(
                     modifier = Modifier
                         .size(10.dp)
-                        .graphicsLayer(
-                            scaleX = indicatorScale,
+                        .graphicsLayer {
+                            scaleX = indicatorScale
                             scaleY = indicatorScale
-                        )
+                        }
                         .clickable { onIndicatorSelect(index) }
                         .background(color, shape = RoundedCornerShape(50))
                 )
@@ -127,3 +124,18 @@ fun BannerSlider(
         }
     }
 }
+
+@Composable
+fun BannerSlider(
+    banners: List<PromoBanner>,
+    currentIndex: Int,
+    onBannerClick: (PromoBanner) -> Unit,
+    onIndicatorSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) = BannerSlider(
+    banners = banners,
+    currentIndexProvider = { currentIndex },
+    onBannerClick = onBannerClick,
+    onIndicatorSelect = onIndicatorSelect,
+    modifier = modifier
+)

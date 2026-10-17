@@ -96,32 +96,23 @@ fun HomeScreen(
                 )
             )
 
-            // TODO: Step 1.5 — Composable Best Practice: Use Stable Keys and contentType in Lazy Lists
-            // Masalah: LazyColumn di bawah ini menggunakan items tanpa `key` eksplisit (mengandalkan indeks array)
-            // dan tanpa `contentType`. Saat item di-reorder atau diubah, state item dapat tertukar dan composition pool tidak dapat digunakan ulang secara optimal.
-            // Tindakan:
-            // 1. Tambahkan `key = { it.id }` pada items(demoProducts).
-            // 2. Tambahkan `contentType = { "product_item" }` agar Compose mereuse layout pool sesama tipe produk.
+            // Step 1.5 Solved: Using key and contentType in LazyColumn to preserve identity and layout pooling
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                item {
-                    // TODO: Step 1.3 — Composable Best Practice: Defer State Reads via Lambda
-                    // Masalah: Membaca `currentIndex` langsung pada level HomeScreen menyebabkan
-                    // seluruh HomeScreen ikut recompose setiap 2 detik saat timer berjalan.
-                    // Tindakan: Ubah Composable child atau wrapper agar menerima lambda `() -> Int` (deferred read)
-                    // sehingga hanya leaf composable yang di-recompose.
+                item(contentType = "banner_carousel") {
+                    // Step 1.3 Solved: Passing lambda provider { currentIndex } defers state read to leaf composable
                     BannerSlider(
                         banners = promoBanners,
-                        currentIndex = currentIndex,
+                        currentIndexProvider = { currentIndex },
                         onBannerClick = { onBannerClick() },
                         onIndicatorSelect = { index -> currentIndex = index },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
 
-                item {
+                item(contentType = "catalog_header") {
                     Text(
                         text = "Featured Products",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
@@ -129,14 +120,18 @@ fun HomeScreen(
                     )
                 }
 
-                items(demoProducts) { product ->
+                items(
+                    items = demoProducts,
+                    key = { it.id },
+                    contentType = { "product_catalog_item" }
+                ) { product ->
                     ProductCatalogItem(
                         product = product,
                         onClick = onBannerClick
                     )
                 }
 
-                item {
+                item(contentType = "bottom_spacer") {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
