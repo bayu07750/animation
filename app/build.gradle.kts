@@ -40,10 +40,7 @@ android {
 }
 
 composeCompiler {
-    @Suppress("UnstableApiUsage")
-    stabilityConfigurationFiles.add(
-        isolated.rootProject.projectDirectory.file("compose_compiler_config.conf")
-    )
+    stabilityConfigurationFile = rootProject.layout.projectDirectory.file("compose_compiler_config.conf")
     reportsDestination = layout.buildDirectory.dir("compose_compiler_report")
     metricsDestination = layout.buildDirectory.dir("compose_compiler_report")
 }
