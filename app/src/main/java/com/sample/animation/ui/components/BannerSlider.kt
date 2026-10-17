@@ -1,5 +1,10 @@
 package com.sample.animation.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -46,9 +51,16 @@ fun BannerSlider(
         }
     }
 
-    // TODO: 1.1 Simple animation for sliding and breathing banner effects.
-    val scale = remember { mutableStateOf(1f) }
-    val offset = remember { mutableStateOf(0f) }
+    val scale by animateFloatAsState(
+        targetValue = if (breathe) 1.02f else 0.98f,
+        animationSpec = tween(durationMillis = 1200),
+        label = "banner_scale"
+    )
+    val offset by animateFloatAsState(
+        targetValue = 0f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "banner_offset"
+    )
 
     Column(
         modifier = modifier,
@@ -59,9 +71,9 @@ fun BannerSlider(
                 .fillMaxWidth()
                 .height(180.dp)
                 .graphicsLayer(
-                    translationX = offset.value,
-                    scaleX = scale.value,
-                    scaleY = scale.value
+                    translationX = offset,
+                    scaleX = scale,
+                    scaleY = scale
                 )
                 .clickable { onBannerClick(activeBanner) },
             colors = CardDefaults.cardColors(containerColor = activeBanner.color),
@@ -86,15 +98,22 @@ fun BannerSlider(
         Spacer(modifier = Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             banners.forEachIndexed { index, _ ->
-                // TODO: 1.2 Simple animation for page indicators effects.
-                val indicatorScale = remember { mutableStateOf(1f) }
-                val color = if (index == currentIndex) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                val indicatorScale by animateFloatAsState(
+                    targetValue = if (index == currentIndex) 1.3f else 1f,
+                    animationSpec = tween(durationMillis = 300),
+                    label = "indicator_scale"
+                )
+                val color by animateColorAsState(
+                    targetValue = if (index == currentIndex) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                    animationSpec = tween(durationMillis = 300),
+                    label = "indicator_color"
+                )
                 Spacer(
                     modifier = Modifier
                         .size(10.dp)
                         .graphicsLayer(
-                            scaleX = indicatorScale.value,
-                            scaleY = indicatorScale.value
+                            scaleX = indicatorScale,
+                            scaleY = indicatorScale
                         )
                         .clickable { onIndicatorSelect(index) }
                         .background(color, shape = RoundedCornerShape(50))

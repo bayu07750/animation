@@ -1,6 +1,11 @@
 package com.sample.animation.ui.checkout
 
+import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,47 +58,57 @@ fun CheckoutScreen(
     var state by remember { mutableStateOf(CheckoutState.Idle) }
     val scope = rememberCoroutineScope()
 
-    // TODO: 4.1 Create the `updateTransition()` that depend on `state` then animate the these
-    //  properties based on their data type
-    val backgroundColor = when (state) {
-        CheckoutState.Idle -> MaterialTheme.colorScheme.surface
-        CheckoutState.Processing -> MaterialTheme.colorScheme.secondaryContainer
-        CheckoutState.Success -> Color(0xFFB2FF59)
-        CheckoutState.Failed -> Color(0xFFFFCDD2)
+    val transition = updateTransition(targetState = state, label = "checkout_transition")
+
+    val backgroundColor by transition.animateColor(label = "background_color") { targetState ->
+        when (targetState) {
+            CheckoutState.Idle -> MaterialTheme.colorScheme.surface
+            CheckoutState.Processing -> MaterialTheme.colorScheme.secondaryContainer
+            CheckoutState.Success -> Color(0xFFB2FF59)
+            CheckoutState.Failed -> Color(0xFFFFCDD2)
+        }
     }
-    val cornerRadius = when (state) {
-        CheckoutState.Idle -> 24f
-        CheckoutState.Processing -> 32f
-        CheckoutState.Success -> 20f
-        CheckoutState.Failed -> 18f
+    val cornerRadius by transition.animateDp(label = "corner_radius") { targetState ->
+        when (targetState) {
+            CheckoutState.Idle -> 24.dp
+            CheckoutState.Processing -> 32.dp
+            CheckoutState.Success -> 20.dp
+            CheckoutState.Failed -> 18.dp
+        }
     }
-    val scale = when (state) {
-        CheckoutState.Processing -> 1.05f
-        CheckoutState.Success -> 1.02f
-        CheckoutState.Failed -> 0.98f
-        else -> 1f
+    val scale by transition.animateFloat(label = "scale") { targetState ->
+        when (targetState) {
+            CheckoutState.Processing -> 1.05f
+            CheckoutState.Success -> 1.02f
+            CheckoutState.Failed -> 0.98f
+            else -> 1f
+        }
     }
-    val rotation = when (state) {
-        CheckoutState.Processing -> 2f
-        CheckoutState.Failed -> -2f
-        else -> 0f
+    val rotation by transition.animateFloat(label = "rotation") { targetState ->
+        when (targetState) {
+            CheckoutState.Processing -> 2f
+            CheckoutState.Failed -> -2f
+            else -> 0f
+        }
     }
 
     val shake = remember { Animatable(0f) }
     LaunchedEffect(state) {
-        /*
-        * TODO: 4.2 Animate the animatable using if-else (that depend on `state`) to decide if we got failed state then
-        *  shake the card horizontally and if we got success state then snap back to original
-        *  Use this keyframes{} to match the expectation for horizontal shake
-        *  keyframes {
-                durationMillis = 500
-                -10f at 0
-                10f at 100
-                -6f at 200
-                3f at 300
-                0f at 500
-            }
-        * */
+        if (state == CheckoutState.Failed) {
+            shake.animateTo(
+                targetValue = 0f,
+                animationSpec = keyframes {
+                    durationMillis = 500
+                    -10f at 0
+                    10f at 100
+                    -6f at 200
+                    3f at 300
+                    0f at 500
+                }
+            )
+        } else {
+            shake.snapTo(0f)
+        }
     }
 
     Surface(modifier = modifier.fillMaxSize()) {
@@ -123,7 +138,7 @@ fun CheckoutScreen(
                         scaleY = scale,
                         rotationZ = rotation
                     )
-                    .clip(RoundedCornerShape(cornerRadius.dp))
+                    .clip(RoundedCornerShape(cornerRadius))
                     .padding(4.dp),
                 color = backgroundColor,
                 tonalElevation = 4.dp

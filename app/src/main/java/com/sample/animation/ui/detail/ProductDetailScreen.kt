@@ -1,5 +1,11 @@
 package com.sample.animation.ui.detail
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -46,7 +52,6 @@ fun ProductDetailScreen(
     onCheckout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // TODO: 2.1 Visibility animation with `fadeIn`/`fadeOut` and `expandVertically`/`shrinkVertically`, wrapped in `animateContentSize`.
     var showMoreInfo by remember { mutableStateOf(true) }
 
     Surface(modifier = modifier.fillMaxSize()) {
@@ -74,6 +79,7 @@ fun ProductDetailScreen(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(20.dp))
                     .padding(8.dp)
+                    .animateContentSize()
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(text = product.name, style = MaterialTheme.typography.headlineSmall)
@@ -97,19 +103,21 @@ fun ProductDetailScreen(
                         Text(text = if (showMoreInfo) "Hide More Info" else "More Info")
                     }
 
-                    /*
-                    * TODO: 2.2 Adjust this content to be expandable based on declared state
-                    *  Don't forget to put a modifier to automatically animate the height changes
-                     */
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    AnimatedVisibility(
+                        visible = showMoreInfo,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
                     ) {
-                        Text(text = "Experience immersive sound with plush ear cushions and adaptive noise cancelling.", style = MaterialTheme.typography.bodyMedium)
-                        Text(text = "Warranty: 1 year", style = MaterialTheme.typography.bodySmall)
-                        Text(text = "Ships in 2-3 business days", style = MaterialTheme.typography.bodySmall)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(text = "Experience immersive sound with plush ear cushions and adaptive noise cancelling.", style = MaterialTheme.typography.bodyMedium)
+                            Text(text = "Warranty: 1 year", style = MaterialTheme.typography.bodySmall)
+                            Text(text = "Ships in 2-3 business days", style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
             }
