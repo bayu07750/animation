@@ -132,6 +132,9 @@ fun CheckoutScreen(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
+                    // TODO: Step 1.1 — Composable Best Practice: Use Lambda Modifiers
+                    // Masalah: Menggunakan `Modifier.graphicsLayer(...)` nilai langsung menyebabkan Composable dievaluasi pada fase Composition.
+                    // Tindakan: Ubah menjadi lambda `graphicsLayer { translationX = shake.value; scaleX = scale; scaleY = scale; rotationZ = rotation }`.
                     .graphicsLayer(
                         translationX = shake.value,
                         scaleX = scale,
@@ -160,6 +163,13 @@ fun CheckoutScreen(
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))
+            // TODO: Step 1.2 — Composable Best Practice: Use derivedStateOf Wisely
+            // Masalah: Kalkulasi status boolean `isPayEnabled` dievaluasi ulang langsung di composition body.
+            // Walaupun nilai cartCount atau state berubah-ubah, hasil boolean sering kali tetap sama.
+            // Tindakan: Bungkus kalkulasi dengan `val isPayEnabled by remember(cartCount, state) { derivedStateOf { cartCount > 0 && state != CheckoutState.Processing && state != CheckoutState.Success } }`
+            // agar recomposition hanya diteruskan jika hasil boolean benar-benar berubah.
+            val isPayEnabled = cartCount > 0 && state != CheckoutState.Processing && state != CheckoutState.Success
+
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Button(
                     onClick = {
@@ -174,7 +184,7 @@ fun CheckoutScreen(
                             }
                         }
                     },
-                    enabled = state != CheckoutState.Success,
+                    enabled = isPayEnabled,
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text(text = if (state == CheckoutState.Processing) "Processing..." else "Pay Now")

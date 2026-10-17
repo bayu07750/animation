@@ -70,6 +70,11 @@ fun BannerSlider(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
+                // TODO: Step 1.1 — Composable Best Practice: Use Lambda Modifiers
+                // Masalah: Menggunakan `Modifier.graphicsLayer(...)` dengan parameter nilai langsung menyebabkan
+                // Composable Card mengalami recomposition di setiap frame perubahan nilai animasi (fase Composition).
+                // Tindakan: Ubah menjadi lambda modifier `Modifier.graphicsLayer { translationX = ...; scaleX = ...; scaleY = ... }`
+                // agar kalkulasi animasi langsung dieksekusi pada fase Drawing dan melewati fase Composition & Layout.
                 .graphicsLayer(
                     translationX = offset,
                     scaleX = scale,
