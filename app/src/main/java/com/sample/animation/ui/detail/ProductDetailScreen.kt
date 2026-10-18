@@ -82,7 +82,12 @@ fun ProductDetailScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(text = product.name, style = MaterialTheme.typography.headlineSmall)
-                    Text(text = "Rp ${product.price}", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
+                    // TODO: Step 1.4 — Composable Best Practice: Avoid Unnecessary Work in Recomposition with remember
+                    // Masalah: Formatting mata uang NumberFormat adalah proses alokasi dan parsing yang berat.
+                    // Saat state lokal (seperti showMoreInfo) berubah, ekspresi ini dieksekusi berulang kali di setiap recomposition.
+                    // Tindakan: Bungkus ekspresi dengan `val formattedPrice = remember(product.price) { ... }`.
+                    val formattedPrice = java.text.NumberFormat.getCurrencyInstance(java.util.Locale("id", "ID")).format(product.price)
+                    Text(text = formattedPrice, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
                     Text(text = product.description, style = MaterialTheme.typography.bodyMedium)
                     HorizontalDivider()
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

@@ -63,6 +63,10 @@ fun BannerSlider(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // TODO: Step 1.1 — Composable Best Practice: Use Lambda Modifiers
+        // Masalah: Menggunakan `Modifier.graphicsLayer(...)` tanpa lambda mengevaluasi nilai state (offset & scale)
+        // pada fase Composition. Hal ini memaksa Composable Card dan child-nya di-recompose di setiap frame animasi.
+        // Tindakan: Ganti dengan lambda version `Modifier.graphicsLayer { ... }` agar pembacaan state ditunda ke fase Drawing.
         Card(
             modifier = Modifier
                 .fillMaxWidth()
