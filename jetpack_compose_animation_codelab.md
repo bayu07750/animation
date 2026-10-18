@@ -12,12 +12,9 @@ author: Khukuh (Mobile Software Engineer @ Nusantara Beta Studio)
 
 Duration: 0:10:00
 
-Welcome to **Jetpack Compose Animation for Engineers**, prepared by **Khukuh (Mobile Software Engineer @ Nusantara Beta Studio)** for the **BCA Training Event**!
+Welcome to **Jetpack Compose Animation for Engineers**, prepared by **Khukuh (Mobile Software Engineer @ Nusantara Beta Studio)**!
 
 <!-- [PLACEHOLDER: Insert Slide Deck URL / QR Code for Presentation Slides here] -->
-> aside note
-> **Trainer / Speaker Note:** Welcome participants to the session. Align expectations: this codelab bridges the gap between Figma design prototypes and performant, production-ready Android implementation using Jetpack Compose.
-> <!-- [PLACEHOLDER: Add event-specific announcement, WiFi instructions, or speaker intro here] -->
 
 ```
 +-----------------------------------------------------------------------------------------+
@@ -185,16 +182,12 @@ To give you a realistic software engineering experience, this codelab provides a
 
 This project includes pre-configured git branches:
 * **`2026/starter`:** The starting branch containing the complete static UI, layouts, and `// TODO:` markers. This is where you will write your code!
-* **`2026/final-course` (or `2026/full-course`):** The completed reference solution containing all working animations for comparison.
 
 To begin, ensure you are on the `2026/starter` branch:
 
 ```bash
 git checkout 2026/starter
 ```
-
-> aside positive
-> **Preserving Reference Branches:** The legacy branches (`master`, `feat/code-lab`, and `feat/full-course`) remain preserved in the repository history for historical reference. Always base your 2026 training exercises on `2026/starter`.
 
 ### 2. Project Requirements
 * **Android Studio:** Android Studio Meerkat (2024.3+) or Ladybug.
@@ -1350,8 +1343,129 @@ Box(modifier = Modifier.graphicsLayer { translationX = animatedOffset })
 
 * **Encapsulate Common Animations:** Package frequently reused animations (such as our payment card shake) into custom reusable modifiers:
 ```kotlin
-fun Modifier.shake(shakeOffset: Float): Modifier = this.graphicsLayer {
-    translationX = shakeOffset
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.keyframes
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.node.LayoutModifierNode
+import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.node.requireDensity
+import androidx.compose.ui.platform.InspectorInfo
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+
+class ShakeController {
+    internal var node: ShakeNode? = null
+
+    fun shake() {
+        node?.shake()
+    }
+}
+
+@Composable
+fun rememberShakeController(): ShakeController {
+    return remember { ShakeController() }
+}
+
+fun Modifier.shake(
+    controller: ShakeController,
+    shakeOffset: Dp = 10.dp,
+    durationMillis: Int = 400
+): Modifier = this.then(
+    ShakeElement(
+        controller = controller,
+        shakeOffset = shakeOffset,
+        durationMillis = durationMillis
+    )
+)
+
+private data class ShakeElement(
+    val controller: ShakeController,
+    val shakeOffset: Dp,
+    val durationMillis: Int
+) : ModifierNodeElement<ShakeNode>() {
+    override fun create(): ShakeNode {
+        return ShakeNode(controller, shakeOffset, durationMillis)
+    }
+
+    override fun update(node: ShakeNode) {
+        node.controller = controller
+        node.shakeOffset = shakeOffset
+        node.durationMillis = durationMillis
+        controller.node = node
+    }
+
+    override fun InspectorInfo.inspectableProperties() {
+        name = "shake"
+        properties["shakeOffset"] = shakeOffset
+        properties["durationMillis"] = durationMillis
+    }
+}
+
+class ShakeNode(
+    var controller: ShakeController,
+    var shakeOffset: Dp,
+    var durationMillis: Int
+) : Modifier.Node(), LayoutModifierNode {
+    private val animatable = Animatable(0f)
+
+    override fun onAttach() {
+        super.onAttach()
+        controller.node = this
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        if (controller.node == this) {
+            controller.node = null
+        }
+    }
+
+    fun shake() {
+        coroutineScope.launch {
+            val offsetPx = with(requireDensity()) { shakeOffset.toPx() }
+
+            // Keyframe sequence for a quick left-right decaying shake
+            val animationSpec: AnimationSpec<Float> = keyframes {
+                durationMillis = this@ShakeNode.durationMillis
+                0.0f at 0
+                -offsetPx at (durationMillis * 0.15f).toInt()
+                offsetPx at (durationMillis * 0.30f).toInt()
+                (-offsetPx * 0.7f) at (durationMillis * 0.45f).toInt()
+                (offsetPx * 0.7f) at (durationMillis * 0.60f).toInt()
+                (-offsetPx * 0.3f) at (durationMillis * 0.75f).toInt()
+                0.0f at durationMillis
+            }
+            animatable.snapTo(0f)
+            animatable.animateTo(
+                targetValue = 0f,
+                animationSpec = animationSpec
+            )
+        }
+    }
+
+    override fun MeasureScope.measure(
+        measurable: Measurable,
+        constraints: Constraints
+    ): MeasureResult {
+        val placeable = measurable.measure(constraints)
+
+        return layout(placeable.width, placeable.height) {
+            // Apply offset on the placement layer to prevent recomposition/relayout
+            placeable.placeWithLayer(
+                x = animatable.value.roundToInt(),
+                y = 0
+            )
+        }
+    }
 }
 ```
 * **Prefer `Modifier.Node` over `composed {}`:** Modern Google guidelines advise replacing legacy `composed { ... }` wrappers with `Modifier.Node` implementations. `Modifier.Node` allocates once and updates directly, eliminating expensive recomposition tracking overhead.
@@ -1520,10 +1634,6 @@ Congratulations on completing the **Jetpack Compose Animation for Engineers** co
 ```
 
 ### Next Steps & Further Exploration
-* Compare your code with the complete reference branch:
-  ```bash
-  git checkout 2026/final-course
-  ```
 * Explore **Shared Element Transitions** (`Modifier.sharedElement`) introduced in recent Compose versions.
 * Inspect your animations in real-time using **Android Studio Animation Preview**.
 * Happy animating in Jetpack Compose!
