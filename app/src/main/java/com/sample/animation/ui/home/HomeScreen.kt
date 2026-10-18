@@ -37,29 +37,6 @@ import com.sample.animation.ui.components.BannerSlider
 import com.sample.animation.ui.components.CartBadge
 import kotlinx.coroutines.delay
 
-/*
- * TODO: Step 3.1 — Recomposition Debugging: Android Studio Layout Inspector
- * Instruksi:
- * 1. Jalankan aplikasi dalam mode Debug pada emulator atau physical device.
- * 2. Buka jendela `Layout Inspector` di Android Studio (View > Tool Windows > Layout Inspector).
- * 3. Centang opsi "Show Recomposition Counts" pada menu dropdown di pojok kiri atas.
- * 4. Amati kolom "Recomposition" dan "Skipped" pada `HomeScreen` saat banner beranimasi otomatis.
- * 5. Bandingkan jumlah recomposition sebelum dan sesudah menerapkan perbaikan Step 1 & Step 2.
- *
- * TODO: Step 3.2 — Recomposition Debugging: Compose Compiler Reports
- * Instruksi:
- * 1. Buka file `app/build.gradle.kts`, periksa blok `composeCompiler { ... }` dengan `reportsDestination`.
- * 2. Jalankan build di terminal: `./gradlew assembleDebug`.
- * 3. Buka folder `app/build/compose_compiler_report/` dan periksa:
- *    - `app-classes.txt`: Temukan `unstable class Product` dan identifikasi field penyebabnya.
- *    - `app-composables.txt`: Periksa Composable yang `restartable not skippable` vs `restartable skippable`.
- *
- * TODO: Step 3.3 — Recomposition Debugging: Plugin Compose Stability Analyzer
- * Instruksi:
- * 1. Pasang plugin "Compose Stability Analyzer" (oleh skydoves) dari Settings > Plugins > Marketplace.
- * 2. Buka file ini atau `Product.kt`, amati badge stabilitas (hijau/merah) langsung di samping parameter Composable.
- */
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -96,32 +73,23 @@ fun HomeScreen(
                 )
             )
 
-            // TODO: Step 1.5 — Composable Best Practice: Use Stable Keys and contentType in Lazy Lists
-            // Masalah: LazyColumn di bawah ini menggunakan items tanpa `key` eksplisit (mengandalkan indeks array)
-            // dan tanpa `contentType`. Saat item di-reorder atau diubah, state item dapat tertukar dan composition pool tidak dapat digunakan ulang secara optimal.
-            // Tindakan:
-            // 1. Tambahkan `key = { it.id }` pada items(demoProducts).
-            // 2. Tambahkan `contentType = { "product_item" }` agar Compose mereuse layout pool sesama tipe produk.
+            // Step 1.5 Solved: Using key and contentType in LazyColumn to preserve identity and layout pooling
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                item {
-                    // TODO: Step 1.3 — Composable Best Practice: Defer State Reads via Lambda
-                    // Masalah: Membaca `currentIndex` langsung pada level HomeScreen menyebabkan
-                    // seluruh HomeScreen ikut recompose setiap 2 detik saat timer berjalan.
-                    // Tindakan: Ubah Composable child atau wrapper agar menerima lambda `() -> Int` (deferred read)
-                    // sehingga hanya leaf composable yang di-recompose.
+                item(contentType = "banner_carousel") {
+                    // Step 1.3 Solved: Passing lambda provider { currentIndex } defers state read to leaf composable
                     BannerSlider(
                         banners = promoBanners,
-                        currentIndex = currentIndex,
+                        currentIndexProvider = { currentIndex },
                         onBannerClick = { onBannerClick() },
                         onIndicatorSelect = { index -> currentIndex = index },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
 
-                item {
+                item(contentType = "catalog_header") {
                     Text(
                         text = "Featured Products",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
@@ -129,14 +97,18 @@ fun HomeScreen(
                     )
                 }
 
-                items(demoProducts) { product ->
+                items(
+                    items = demoProducts,
+                    key = { it.id },
+                    contentType = { "product_catalog_item" }
+                ) { product ->
                     ProductCatalogItem(
                         product = product,
                         onClick = onBannerClick
                     )
                 }
 
-                item {
+                item(contentType = "bottom_spacer") {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }

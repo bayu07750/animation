@@ -29,6 +29,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -131,15 +132,12 @@ fun CheckoutScreen(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    // TODO: Step 1.1 — Composable Best Practice: Use Lambda Modifiers
-                    // Masalah: Menggunakan `Modifier.graphicsLayer(...)` nilai langsung menyebabkan Composable dievaluasi pada fase Composition.
-                    // Tindakan: Ubah menjadi lambda `graphicsLayer { translationX = shake.value; scaleX = scale; scaleY = scale; rotationZ = rotation }`.
-                    .graphicsLayer(
-                        translationX = shake.value,
-                        scaleX = scale,
-                        scaleY = scale,
+                    .graphicsLayer {
+                        translationX = shake.value
+                        scaleX = scale
+                        scaleY = scale
                         rotationZ = rotation
-                    )
+                    }
                     .clip(RoundedCornerShape(cornerRadius.dp))
                     .padding(4.dp),
                 color = backgroundColor,
@@ -162,12 +160,9 @@ fun CheckoutScreen(
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))
-            // TODO: Step 1.2 — Composable Best Practice: Use derivedStateOf Wisely
-            // Masalah: Kalkulasi status boolean `isPayEnabled` dievaluasi ulang langsung di composition body.
-            // Walaupun nilai cartCount atau state berubah-ubah, hasil boolean sering kali tetap sama.
-            // Tindakan: Bungkus kalkulasi dengan `val isPayEnabled by remember(cartCount, state) { derivedStateOf { cartCount > 0 && state != CheckoutState.Processing && state != CheckoutState.Success } }`
-            // agar recomposition hanya diteruskan jika hasil boolean benar-benar berubah.
-            val isPayEnabled = cartCount > 0 && state != CheckoutState.Processing && state != CheckoutState.Success
+            val isPayEnabled by remember(cartCount, state) {
+                derivedStateOf { cartCount > 0 && state != CheckoutState.Processing && state != CheckoutState.Success }
+            }
 
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Button(
