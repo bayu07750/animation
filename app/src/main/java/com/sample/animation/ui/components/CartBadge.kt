@@ -1,7 +1,6 @@
 package com.sample.animation.ui.components
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -9,7 +8,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.with
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Badge
@@ -25,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun CartBadge(
     count: Int,
@@ -39,7 +37,7 @@ fun CartBadge(
                     AnimatedContent(
                         targetState = count,
                         transitionSpec = {
-                            (slideInVertically { it } + fadeIn(animationSpec = tween(300)) + scaleIn()) with
+                            (slideInVertically { it } + fadeIn(animationSpec = tween(300)) + scaleIn()) togetherWith
                                 (slideOutVertically { -it } + fadeOut(animationSpec = tween(300)) + scaleOut())
                         },
                         label = "CartCount"
